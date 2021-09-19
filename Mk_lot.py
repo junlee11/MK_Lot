@@ -13,6 +13,7 @@ import pandas as pd
 
 set_dic = {}
 
+
 with open('source_target_path.txt','r') as f:
     reader = csv.reader(f)
     set_dic = {rows[0]: rows[1].lstrip() for rows in reader}
@@ -37,8 +38,9 @@ class WindowClass(QMainWindow, form_class) :
 
         self.push_source.clicked.connect(self.mk_path_s)
         self.push_target.clicked.connect(self.mk_path_t)
-        self.push_setting.clicked.connect(self.set_open)
         self.push_run.clicked.connect(self.mk_folder)
+        self.push_setting.clicked.connect(self.set_open)
+        self.push_manual.clicked.connect(self.manual_open)
 
 #######################################경로 지정
     def mk_path_s(self):
@@ -67,7 +69,14 @@ class WindowClass(QMainWindow, form_class) :
     def set_open(self):
         excel = win32.Dispatch("Excel.Application")
         excel.Visible = True
-        excel.Workbooks.Open('Device_set.xlsx')
+        excel.Workbooks.Open(os.getcwd() + '/' + 'Device_set.xlsx')
+        #excel.Workbooks.Open('Device_set.xlsx')
+
+    def manual_open(self):
+        excel = win32.Dispatch("Excel.Application")
+        excel.Visible = True
+        excel.Workbooks.Open(os.getcwd() + '/' + 'Manual.xlsx')
+        #excel.Workbooks.Open('Manual.xlsx')
 
 ####################################Lot 폴더 생성 시작
     def mk_folder(self):
@@ -130,6 +139,7 @@ class WindowClass(QMainWindow, form_class) :
 
         excel_f.Save()
         excel.Quit()
+        QMessageBox.information(self,'Lot_Folder', '생성 완료!')
 
     def c_folder(self, dir):
         if not os.path.exists(dir):
