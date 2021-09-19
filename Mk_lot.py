@@ -8,10 +8,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5 import uic
-import tkinter
-from tkinter import filedialog
-import openpyxl
 import win32com.client as win32
+import pandas as pd
 
 set_dic = {}
 
@@ -32,6 +30,8 @@ class WindowClass(QMainWindow, form_class) :
 
         global set_dic
 
+        self.line_device.setValidator(QIntValidator(self))  # 정수
+
         self.line_source.setText(set_dic['Source'])
         self.line_target.setText(set_dic['Target'])
 
@@ -48,11 +48,8 @@ class WindowClass(QMainWindow, form_class) :
         self.mk_path('Target')
 
     def mk_path(self,s):
-        root = tkinter.Tk()
-        root.withdraw
 
-        dir_path = filedialog.askdirectory(parent=root, initialdir="/", title='경로 선택')
-        root.destroy()
+        dir_path = QFileDialog.getExistingDirectory(self,'Find Folder')
 
         if len(dir_path) == 0:
             pass
@@ -76,8 +73,11 @@ class WindowClass(QMainWindow, form_class) :
     def mk_folder(self):
         self.f_flag = 0
         self.L_flag = 0
+        self.a_flag = 0
+        self.exit_flag = 0
 
         self.f_list = os.listdir(self.line_source.text())
+
         #Interlock
         for file in self.f_list:
             if self.line_device.text() in file:
@@ -93,34 +93,50 @@ class WindowClass(QMainWindow, form_class) :
             QMessageBox.warning(self, "LT Interlock", "수명 Source 파일이 없습니다.")
             return
 
+        self.df_set = pd.read_excel('Device_set.xlsx', header = 0, index_col = 0)
+
+        for i,j in self.df_set.iterrows():
+            if self.line_device.text() == str(i) : self.a_flag = 1
+
+        if self.a_flag == 0 : return
 
         #1. 전체 폴더 생성
         self.c_folder(self.line_target.text() + '/' + self.line_folder.text())
+        if self.exit_flag == 1: return
 
         #2. 하위 폴더 생성
         self.c_folder(self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL')
         self.c_folder(self.line_target.text() + '/' + self.line_folder.text() + '/' + '수명')
 
         #3. IVL 파일 / 폴더
-        self.c_folder(self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + str(self.line_folder)[:6])
-        shutil.copy(self.line_source.text() + '/' + self.line_device.text() + ' IVL.xlsm', self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL')
-        os.rename(self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + self.line_device.text() + ' IVL.xlsm'
-                  , self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + self.line_folder.text() + '.xlsm')
+        origin = self.line_source.text() + '/' + self.line_device.text() + ' IVL.xlsm'
+        copy = self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + self.line_folder.text() + '.xlsm'
+        self.c_folder(self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + self.line_folder.text()[:6])
+        shutil.copy(origin,copy)
 
         #4. 수명 파일 생성 및 수명 입력
-        shutil.copy(self.line_source.text() + '/' + '복사용 수명 매크로.xlsm', self.line_target.text() + '/' + self.line_folder.text() + '/' + '수명')
-        os.rename(self.line_source.text() + '/' + '복사용 수명 매크로.xlsm', self.line_target.text() + '/' + self.line_folder.text() + '/' + '수명' + '복사용 수명 매크로.xlsm'
-                  , self.line_source.text() + '/' + '복사용 수명 매크로.xlsm', self.line_target.text() + '/' + self.line_folder.text() + '/' + '수명' + self.line_folder.text() + ' - 수명.xlsm')
+        origin = self.line_source.text() + '/' + '복사용 수명 매크로.xlsm'
+        copy = self.line_target.text() + '/' + self.line_folder.text() + '/' +'수명' + '/' + self.line_folder.text() + ' - 수명.xlsm'
+        shutil.copy(origin,copy)
 
-        #수명 매크로
-        #excel = win32.Dispatch("Excel.Application")
-        #excel.Visible = True
+        #5. 수명 매크로 LT 입력
+        excel = win32.Dispatch("Excel.Application")
+        excel.Visible = True
+        excel_f = excel.Workbooks.Open(copy)
+        ws = excel_f.worksheets('Main')
+
+        for i in range(0,8):
+            ws.Cells(1, 4 + i).Value = self.df_set.loc[int(self.line_device.text())].at['L' + str(i)]
+
+        excel_f.Save()
+        excel.Quit()
 
     def c_folder(self, dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
         else:
             QMessageBox.warning(self, "Path Interlock", "이미 존재하는 폴더입니다.")
+            self.exit_flag = 1
             return
 
 

@@ -1,2 +1,2 @@
-Source,D:/210918/Lot 폴더 Source
-Target,C:/Users/heeyoung/OneDrive/바탕 화면/LG 매크로 관련/test2
+Source,C:/Users/ijung/Desktop/노트북 공유폴더/공유폴더/08. 신규 증착기/5. 매크로용/Lot 폴더 Source
+Target,C:/Users/ijung/Desktop/210919_Mk_Lot_test
