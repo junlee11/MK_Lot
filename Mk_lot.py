@@ -116,10 +116,6 @@ class WindowClass(QMainWindow, form_class) :
         #excel = win32.Dispatch("Excel.Application")
         #excel.Visible = True
 
-
-
-
-
     def c_folder(self, dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
