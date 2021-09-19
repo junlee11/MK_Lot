@@ -31,6 +31,8 @@ class WindowClass(QMainWindow, form_class) :
 
         global set_dic
 
+        self.setWindowIcon(QIcon('Icon_apeach.png'))
+
         self.line_device.setValidator(QIntValidator(self))  # 정수
 
         self.line_source.setText(set_dic['Source'])
