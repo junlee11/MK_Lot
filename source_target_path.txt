@@ -1,0 +1,2 @@
+Source,D:/210918/Lot 폴더 Source
+Target,C:/Users/heeyoung/OneDrive/바탕 화면/LG 매크로 관련/test2
