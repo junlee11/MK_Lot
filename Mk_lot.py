@@ -9,10 +9,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5 import uic
 import win32com.client as win32
-import pandas as pd
 
 set_dic = {}
-
 
 with open('source_target_path.txt','r') as f:
     reader = csv.reader(f)
@@ -41,7 +39,6 @@ class WindowClass(QMainWindow, form_class) :
         self.push_source.clicked.connect(self.mk_path_s)
         self.push_target.clicked.connect(self.mk_path_t)
         self.push_run.clicked.connect(self.mk_folder)
-        self.push_setting.clicked.connect(self.set_open)
         self.push_manual.clicked.connect(self.manual_open)
 
 #######################################경로 지정
@@ -68,12 +65,6 @@ class WindowClass(QMainWindow, form_class) :
                     writer.writerow([k, v])
 ########################################경로 지정 끝
 
-    def set_open(self):
-        excel = win32.Dispatch("Excel.Application")
-        excel.Visible = True
-        excel.Workbooks.Open(os.getcwd() + '/' + 'Device_set.xlsx')
-        #excel.Workbooks.Open('Device_set.xlsx')
-
     def manual_open(self):
         excel = win32.Dispatch("Excel.Application")
         excel.Visible = True
@@ -84,16 +75,15 @@ class WindowClass(QMainWindow, form_class) :
     def mk_folder(self):
         self.f_flag = 0
         self.L_flag = 0
-        self.a_flag = 0
         self.exit_flag = 0
 
         self.f_list = os.listdir(self.line_source.text())
 
         #Interlock
         for file in self.f_list:
-            if self.line_device.text() in file:
+            if self.line_device.text() in file and 'IVL' in file:
                 self.f_flag = 1
-            if '복사용 수명 매크로' in file:
+            if self.line_device.text() in file and '수명' in file:
                 self.L_flag = 1
 
         if self.f_flag != 1:
@@ -104,12 +94,11 @@ class WindowClass(QMainWindow, form_class) :
             QMessageBox.warning(self, "LT Interlock", "수명 Source 파일이 없습니다.")
             return
 
-        self.df_set = pd.read_excel('Device_set.xlsx', header = 0, index_col = 0)
+        #QMessageBox.information(self,'message', str(self.f_flag))
+        #self.df_set = pd.read_excel('Device_set.xlsx', header = 0, index_col = 0)
 
-        for i,j in self.df_set.iterrows():
-            if self.line_device.text() == str(i) : self.a_flag = 1
-
-        if self.a_flag == 0 : return
+        #for i,j in self.df_set.iterrows():
+        #    if self.line_device.text() == str(i) : self.a_flag = 1
 
         #1. 전체 폴더 생성
         self.c_folder(self.line_target.text() + '/' + self.line_folder.text())
@@ -122,25 +111,15 @@ class WindowClass(QMainWindow, form_class) :
         #3. IVL 파일 / 폴더
         origin = self.line_source.text() + '/' + self.line_device.text() + ' IVL.xlsm'
         copy = self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + self.line_folder.text() + '.xlsm'
-        self.c_folder(self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + self.line_folder.text()[:6])
+        self.c_folder(self.line_target.text() + '/' + self.line_folder.text() + '/' + 'IVL' + '/' + self.line_folder.text()[:7])
         shutil.copy(origin,copy)
 
         #4. 수명 파일 생성 및 수명 입력
-        origin = self.line_source.text() + '/' + '복사용 수명 매크로.xlsm'
+        #origin = self.line_source.text() + '/' + '복사용 수명 매크로.xlsm'
+        origin = self.line_source.text() + '/' + self.line_device.text() + ' 수명.xlsm'
         copy = self.line_target.text() + '/' + self.line_folder.text() + '/' +'수명' + '/' + self.line_folder.text() + ' - 수명.xlsm'
         shutil.copy(origin,copy)
 
-        #5. 수명 매크로 LT 입력
-        excel = win32.Dispatch("Excel.Application")
-        excel.Visible = True
-        excel_f = excel.Workbooks.Open(copy)
-        ws = excel_f.worksheets('Main')
-
-        for i in range(0,8):
-            ws.Cells(1, 4 + i).Value = self.df_set.loc[int(self.line_device.text())].at['L' + str(i)]
-
-        excel_f.Save()
-        excel.Quit()
         QMessageBox.information(self,'Lot_Folder', '생성 완료!')
 
     def c_folder(self, dir):
@@ -150,7 +129,6 @@ class WindowClass(QMainWindow, form_class) :
             QMessageBox.warning(self, "Path Interlock", "이미 존재하는 폴더입니다.")
             self.exit_flag = 1
             return
-
 
 if __name__ == "__main__" :
     app = QApplication(sys.argv)
